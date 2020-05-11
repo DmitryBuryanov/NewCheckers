@@ -30,7 +30,6 @@ public class CheckerModel extends StackPane {
         else circle.setFill(Color.WHITESMOKE);
         relocate((x + 0.1) * MainApp.size, (y + 0.1) * MainApp.size);
         setOnMouseDragged(e -> {
-            //relocate(e.getSceneX(), e.getSceneY());
             relocate((Math.floor(e.getSceneX() / MainApp.size) + 0.1) * MainApp.size,
                     (Math.floor(e.getSceneY() / MainApp.size) + 0.1) * MainApp.size);
         });
