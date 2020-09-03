@@ -4,13 +4,20 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import model.Checker;
 import model.GameState;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 public class MainApp extends Application {
@@ -19,19 +26,50 @@ public class MainApp extends Application {
     private Group cells = new Group();
     private Group checkers = new Group();
     public static int size = 90;
+    Pane root = new Pane();
 
-    private Pane makeBoard() throws Exception {
-        gameState.getBoard();
-        fillBoard();
-        Pane root = new Pane();
+    private Pane makeScreen() throws Exception {
+
+        Image image =
+                new Image(new FileInputStream(new File("src\\main\\resources\\checkers-436285.jpg").getAbsolutePath()));
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(8 * size);
+        imageView.setFitHeight(8 * size);
+
+        Text head = new Text("Welcome to Russian Checkers");
+        head.setFont(new Font(size * 0.5));
+        head.setFill(Color.WHITESMOKE);
+        head.relocate(0.7 * size, 1);
+
+        Text down = new Text("Game by Dmitry Buryanov");
+        down.setFont(new Font(size * 0.2));
+        down.setFill(Color.WHITESMOKE);
+        down.relocate(0.7 * size, size * 7.5);
+
+        Button but1 = new Button("Игра с другом");
+        Button but2 = new Button("Игра с компьютером");
+        but1.relocate(3.5 * size, 3.5 * size);
+        but2.relocate(3.3 * size, 4 * size);
         root.setPrefSize(8 * size, 8 * size);
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Rectangle rectangle = createCell(i, j);
-                cells.getChildren().add(rectangle);
+
+        root.getChildren().addAll(imageView, but1, but2, head, down);
+
+        but1.setOnMouseClicked(e -> {
+            try {
+                gameState.getBoard();
+                fillBoard();
+                root.setPrefSize(8 * size, 8 * size);
+                for (int i = 0; i < 8; i++) {
+                    for (int j = 0; j < 8; j++) {
+                        Rectangle rectangle = createCell(i, j);
+                        cells.getChildren().add(rectangle);
+                    }
+                }
+                root.getChildren().addAll(cells, checkers);
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-        }
-        root.getChildren().addAll(cells, checkers);
+        });
         return root;
     }
 
@@ -50,7 +88,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Scene scene = new Scene(makeBoard(), 8 * size, 8 * size);
+        Scene scene = new Scene(makeScreen(), 8 * size, 8 * size);
         stage.setScene(scene);
         stage.setTitle("Checkers");
         stage.show();
@@ -113,12 +151,18 @@ public class MainApp extends Application {
                 alert.setHeaderText(null);
                 alert.setContentText("Game is over. Let's start again");
                 alert.showAndWait();
+                try {
+                    root.getChildren().clear();
+                    makeScreen();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
 
             checkers.getChildren().clear();
             try {
                 fillBoard();
-            } catch (FileNotFoundException ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
