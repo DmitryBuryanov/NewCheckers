@@ -58,21 +58,78 @@ public class MainApp extends Application {
             try {
                 gameState.getBoard();
                 fillBoard();
-                root.setPrefSize(8 * size, 8 * size);
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        Rectangle rectangle = createCell(i, j);
-                        cells.getChildren().add(rectangle);
-                    }
-                }
-                root.getChildren().addAll(cells, checkers);
+                makeField();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
+
+        but2.setOnMouseClicked(e -> {
+            try {
+                choise();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
         return root;
     }
 
+    //создание окна выбора, за какую сторону играть при игре с ИИ
+    private void choise() throws FileNotFoundException {
+        Image image =
+                new Image(new FileInputStream(new File("src\\main\\resources\\checkers-436285.jpg").getAbsolutePath()));
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(8 * size);
+        imageView.setFitHeight(8 * size);
+
+        Button but3 = new Button("Игра за белых");
+        Button but4 = new Button("Игра за черных");
+        but3.relocate(3.5 * size, 3.5 * size);
+        but4.relocate(3.45 * size, 4 * size);
+        root.setPrefSize(8 * size, 8 * size);
+
+        root.getChildren().clear();
+        root.getChildren().addAll(imageView, but3, but4);
+
+        but3.setOnMouseClicked(e -> {
+            System.out.println("White");
+            gameState.getBoard();
+            try {
+                fillBoard();
+                makeField();
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        but4.setOnMouseClicked(e -> {
+            System.out.println("Black");
+            gameState.getBoard();
+            try {
+                fillBoard();
+                makeField();
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+            }
+        });
+
+    }
+
+    //отрисовка поля
+    private void makeField() {
+        root.setPrefSize(8 * size, 8 * size);
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Rectangle rectangle = createCell(i, j);
+                cells.getChildren().add(rectangle);
+            }
+        }
+        root.getChildren().clear();
+        root.getChildren().addAll(cells, checkers);
+    }
+
+    //заполнение доски шашками
     private void fillBoard() throws FileNotFoundException {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
