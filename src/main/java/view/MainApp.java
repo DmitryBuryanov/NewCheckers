@@ -27,9 +27,12 @@ public class MainApp extends Application {
     private Group checkers = new Group();
     public static int size = 90;
     Pane root = new Pane();
+    private boolean friendGame = true;
+    private model.Color iiColor = model.Color.NEITHRAL;
 
     private Pane makeScreen() throws Exception {
 
+        // change numbers
         Image image =
                 new Image(new FileInputStream(new File("src\\main\\resources\\checkers-436285.jpg").getAbsolutePath()));
         ImageView imageView = new ImageView(image);
@@ -67,6 +70,7 @@ public class MainApp extends Application {
         but2.setOnMouseClicked(e -> {
             try {
                 choise();
+                friendGame = false;
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -98,6 +102,7 @@ public class MainApp extends Application {
             try {
                 fillBoard();
                 makeField();
+                iiColor = model.Color.BLACK;
             } catch (FileNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -106,9 +111,11 @@ public class MainApp extends Application {
         but4.setOnMouseClicked(e -> {
             System.out.println("Black");
             gameState.getBoard();
+            makeField();
+            iiColor = model.Color.WHITE;
+            gameState.makeIImove(iiColor);
             try {
                 fillBoard();
-                makeField();
             } catch (FileNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -131,6 +138,7 @@ public class MainApp extends Application {
 
     //заполнение доски шашками
     private void fillBoard() throws FileNotFoundException {
+        checkers.getChildren().clear();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Checker checker;
@@ -171,6 +179,16 @@ public class MainApp extends Application {
             int newX = (int) Math.floor(e.getSceneX() / size);
             int newY = (int) Math.floor(e.getSceneY() / size);
 
+            if (!friendGame) {
+                if (checker.color == iiColor) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Warning");
+                    alert.setHeaderText(null);
+                    alert.setContentText("It is not your checker");
+                    alert.showAndWait();
+                }
+            }
+
             if (gameState.previousMoveColor == model.Color.BLACK && gameState.needtobyteforWhite() &&
                     checker.color == model.Color.WHITE && gameState.canMove(newX, newY, checker) != 2) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -189,7 +207,42 @@ public class MainApp extends Application {
                 alert.showAndWait();
             }
 
-            gameState.makeMove(newX, newY, checker);
+            int moveType = gameState.canMove(newX, newY, checker);
+
+            if ((gameState.needtobyteforWhite() && checker.color == model.Color.WHITE || gameState.needtobyteforBlack()
+                    && checker.color == model.Color.BLACK) && moveType != 2) {
+                moveType = 0;
+            }
+            if (moveType != 0) gameState.makeMove(newX, newY, checker);
+
+            if (moveType != 0 && gameState.moveCount == 0 && gameState.board[1][0].hasChecker() && gameState.board[3][0].hasChecker() &&
+                    gameState.board[5][0].hasChecker() && gameState.board[7][0].hasChecker() &&
+                    gameState.board[0][1].hasChecker() && gameState.board[2][1].hasChecker() &&
+                    gameState.board[4][1].hasChecker() && gameState.board[6][1].hasChecker() &&
+                    gameState.board[1][2].hasChecker() && gameState.board[3][2].hasChecker() &&
+                    gameState.board[5][2].hasChecker() && gameState.board[7][2].hasChecker() &&
+                    gameState.board[0][5].hasChecker() && gameState.board[2][5].hasChecker() &&
+                    gameState.board[4][5].hasChecker() && gameState.board[6][5].hasChecker() &&
+                    gameState.board[1][6].hasChecker() && gameState.board[3][6].hasChecker() &&
+                    gameState.board[5][6].hasChecker() && gameState.board[7][6].hasChecker() &&
+                    gameState.board[0][7].hasChecker() && gameState.board[2][7].hasChecker() &&
+                    gameState.board[4][7].hasChecker() && gameState.board[6][7].hasChecker()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("We have winner");
+                alert.setHeaderText(null);
+                alert.setContentText("Game is over. Let's start again");
+                alert.showAndWait();
+                try {
+                    root.getChildren().clear();
+                    makeScreen();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            if (!friendGame && moveType != 0 && gameState.previousMoveColor != iiColor) {
+                gameState.makeIImove(iiColor);
+            }
 
             if (gameState.moveCount == 0 && gameState.board[1][0].hasChecker() && gameState.board[3][0].hasChecker() &&
                     gameState.board[5][0].hasChecker() && gameState.board[7][0].hasChecker() &&
