@@ -116,18 +116,12 @@ public class GameState {
                 if (checker.color == Color.WHITE && newY == 0) checker.isDamka = true;
 
                 if (gameover().equals("White won") || gameover().equals("Black won")) {
-                    getBoard();
                     previousMoveColor = Color.BLACK;
                 }
             }
 
             if (checker.color == Color.BLACK && newY == 7 || checker.color == Color.WHITE && newY == 0)
                 checker.isDamka = true;
-
-            if (gameover().equals("White won") || gameover().equals("Black won")) {
-                getBoard();
-                previousMoveColor = Color.BLACK;
-            }
         }
         checker.moveType = moveResult;
     }
@@ -265,10 +259,14 @@ public class GameState {
             System.out.println(minimax[2]);
             System.out.println(minimax[3]);
             makeMove(minimax[2], minimax[3], board[minimax[0]][minimax[1]].getChecker());
+            if (gameover().equals("White won") || gameover().equals("Black won")) break;
         }
     }
 
     public void undoMove(int oldx, int oldy, int newx, int newy, Color color) {
+        if (color == Color.BLACK) previousMoveColor = Color.WHITE;
+        else previousMoveColor = Color.BLACK;
+
         board[newx][newy].setChecker(null);
         board[oldx][oldy].setChecker(new Checker(oldx, oldy, color, 0, false));
 
@@ -280,24 +278,19 @@ public class GameState {
             board[evilX][evilY].setChecker(new Checker(evilX, evilY, evilColor, 0, false));
         }
 
-        if (color == Color.BLACK) previousMoveColor = Color.WHITE;
-        else previousMoveColor = Color.BLACK;
+
         moveCount--;
     }
 
+    //реализовать просчет последнего хода
     //минимакс
     public Integer[] minimax(int depth, Color color) {
         Integer[] currentDepth = new Integer[]{0, 0, 0, 0, 0};
 
-        int evaluation = getEvaluation();
-        if (evaluation > 950) {
-            currentDepth[4] = 950;
-            return currentDepth;
-        }
-        if (evaluation < -950) {
-            currentDepth[4] = -950;
-            return currentDepth;
-        }
+        if (gameover().equals("White won")) currentDepth[4] = 1000;
+        if (gameover().equals("Black won")) currentDepth[4] = -1000;
+        if (currentDepth[4] == 1000 || currentDepth[4] == -1000) return currentDepth;
+
         if (color == Color.BLACK) currentDepth[4] = Integer.MAX_VALUE;
         else currentDepth[4] = Integer.MIN_VALUE;
         for (int i = 0; i < 8; i++) {
@@ -637,8 +630,6 @@ public class GameState {
         }
         if (previousMoveColor == Color.BLACK && needtobyteforWhite()) blackCount--;
         else if (previousMoveColor == Color.WHITE && needtobyteforBlack()) whiteCount--;
-        if (whiteCount == 0) blackCount += 1000;
-        if (blackCount == 0) whiteCount += 1000;
         return whiteCount - blackCount;
     }
 }

@@ -215,18 +215,7 @@ public class MainApp extends Application {
             }
             if (moveType != 0) gameState.makeMove(newX, newY, checker);
 
-            if (moveType != 0 && gameState.moveCount == 0 && gameState.board[1][0].hasChecker() && gameState.board[3][0].hasChecker() &&
-                    gameState.board[5][0].hasChecker() && gameState.board[7][0].hasChecker() &&
-                    gameState.board[0][1].hasChecker() && gameState.board[2][1].hasChecker() &&
-                    gameState.board[4][1].hasChecker() && gameState.board[6][1].hasChecker() &&
-                    gameState.board[1][2].hasChecker() && gameState.board[3][2].hasChecker() &&
-                    gameState.board[5][2].hasChecker() && gameState.board[7][2].hasChecker() &&
-                    gameState.board[0][5].hasChecker() && gameState.board[2][5].hasChecker() &&
-                    gameState.board[4][5].hasChecker() && gameState.board[6][5].hasChecker() &&
-                    gameState.board[1][6].hasChecker() && gameState.board[3][6].hasChecker() &&
-                    gameState.board[5][6].hasChecker() && gameState.board[7][6].hasChecker() &&
-                    gameState.board[0][7].hasChecker() && gameState.board[2][7].hasChecker() &&
-                    gameState.board[4][7].hasChecker() && gameState.board[6][7].hasChecker()) {
+            if (gameState.gameover().equals("White won") || gameState.gameover().equals("Black won")) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("We have winner");
                 alert.setHeaderText(null);
@@ -242,32 +231,23 @@ public class MainApp extends Application {
 
             if (!friendGame && moveType != 0 && gameState.previousMoveColor != iiColor) {
                 gameState.makeIImove(iiColor);
-            }
+                System.out.println(gameState.gameover());
 
-            if (gameState.moveCount == 0 && gameState.board[1][0].hasChecker() && gameState.board[3][0].hasChecker() &&
-                    gameState.board[5][0].hasChecker() && gameState.board[7][0].hasChecker() &&
-                    gameState.board[0][1].hasChecker() && gameState.board[2][1].hasChecker() &&
-                    gameState.board[4][1].hasChecker() && gameState.board[6][1].hasChecker() &&
-                    gameState.board[1][2].hasChecker() && gameState.board[3][2].hasChecker() &&
-                    gameState.board[5][2].hasChecker() && gameState.board[7][2].hasChecker() &&
-                    gameState.board[0][5].hasChecker() && gameState.board[2][5].hasChecker() &&
-                    gameState.board[4][5].hasChecker() && gameState.board[6][5].hasChecker() &&
-                    gameState.board[1][6].hasChecker() && gameState.board[3][6].hasChecker() &&
-                    gameState.board[5][6].hasChecker() && gameState.board[7][6].hasChecker() &&
-                    gameState.board[0][7].hasChecker() && gameState.board[2][7].hasChecker() &&
-                    gameState.board[4][7].hasChecker() && gameState.board[6][7].hasChecker()) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("We have winner");
-                alert.setHeaderText(null);
-                alert.setContentText("Game is over. Let's start again");
-                alert.showAndWait();
-                try {
-                    root.getChildren().clear();
-                    makeScreen();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                if (gameState.gameover().equals("White won") || gameState.gameover().equals("Black won")) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("We have winner");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Game is over. Let's start again");
+                    alert.showAndWait();
+                    try {
+                        root.getChildren().clear();
+                        makeScreen();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
+
 
             checkers.getChildren().clear();
             try {

@@ -14,11 +14,20 @@ public class Tests {
         GameState gameState = new GameState();
 
         gameState.getBoard();
+
+        gameState.board[5][2].setChecker(new Checker(5,2,Color.BLACK, 0, false));
+        gameState.board[4][3].setChecker(new Checker(4,3,Color.WHITE, 0, false));
         gameState.makeIImove(Color.WHITE);
+        System.out.println(gameState.gameover());
+        /*gameState.makeMove(6, 1, gameState.board[4][3].getChecker());
+        System.out.println(gameState.gameover());
+        gameState.undoMove(4, 3, 6, 1, Color.WHITE);
+        assertTrue(gameState.board[5][2].hasChecker() && gameState.board[4][3].hasChecker());*/
+        /*gameState.getBoard();
 
         //System.out.println(gameState.getEvaluation());
         //тестирование правильного заполнения доски в начале игры
-        /*assertTrue(
+        assertTrue(
                 //белые шашки
                 gameState.board[0][7].hasChecker() && gameState.board[2][7].hasChecker() &&
                         gameState.board[4][7].hasChecker() && gameState.board[6][7].hasChecker() &&
@@ -134,7 +143,7 @@ public class Tests {
                         gameState.board[1][2].hasChecker() && gameState.board[3][2].hasChecker() &&
                         gameState.board[5][2].hasChecker() && gameState.board[7][2].hasChecker());
 
-        System.out.println(gameState.getEvaluation());
+
         //тестирование обнуляемости числа ходов после сброса доски
         assertTrue(gameState.moveCount == 0);*/
 
