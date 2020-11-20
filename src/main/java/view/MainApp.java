@@ -23,37 +23,53 @@ import java.io.FileNotFoundException;
 public class MainApp extends Application {
 
     GameState gameState = new GameState();
-    private Group cells = new Group();
-    private Group checkers = new Group();
-    public static int size = 90;
+    private final Group cells = new Group();
+    private final Group checkers = new Group();
+    public static int size = 100;
     Pane root = new Pane();
     private boolean friendGame = true;
     private model.Color iiColor = model.Color.NEITHRAL;
+    private int rectanglesSize = 8; //количество клеток в ряду
 
+    //отрисовка главного экрана приложения
     private Pane makeScreen() throws Exception {
 
-        // change numbers
         Image image =
                 new Image(new FileInputStream(new File("src\\main\\resources\\checkers-436285.jpg").getAbsolutePath()));
         ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(8 * size);
-        imageView.setFitHeight(8 * size);
+        imageView.setFitWidth(rectanglesSize * size);
+        imageView.setFitHeight(rectanglesSize * size);
 
         Text head = new Text("Welcome to Russian Checkers");
-        head.setFont(new Font(size * 0.5));
+
+        Double headSize = 0.5;
+        Double headX = 0.7;
+        Double headY = 1.0;
+
+        head.setFont(new Font(size * headSize));
         head.setFill(Color.WHITESMOKE);
-        head.relocate(0.7 * size, 1);
+        head.relocate(headX * size, headY);
+
+        Double textSize = 0.2;
+        Double textX = 0.7;
+        Double textY = 7.5;
 
         Text down = new Text("Game by Dmitry Buryanov");
-        down.setFont(new Font(size * 0.2));
+        down.setFont(new Font(size * textSize));
         down.setFill(Color.WHITESMOKE);
-        down.relocate(0.7 * size, size * 7.5);
+        down.relocate(textX * size, size * textY);
 
         Button but1 = new Button("Игра с другом");
         Button but2 = new Button("Игра с компьютером");
-        but1.relocate(3.5 * size, 3.5 * size);
-        but2.relocate(3.3 * size, 4 * size);
-        root.setPrefSize(8 * size, 8 * size);
+
+        Double but1X = 3.5;
+        Double but1Y = 3.5;
+        Double but2X = 3.3;
+        Double but2Y = 4.0;
+
+        but1.relocate(but1X * size, but1Y * size);
+        but2.relocate(but2X * size, but2Y * size);
+        root.setPrefSize(rectanglesSize * size, rectanglesSize * size);
 
         root.getChildren().addAll(imageView, but1, but2, head, down);
 
@@ -84,14 +100,20 @@ public class MainApp extends Application {
         Image image =
                 new Image(new FileInputStream(new File("src\\main\\resources\\checkers-436285.jpg").getAbsolutePath()));
         ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(8 * size);
-        imageView.setFitHeight(8 * size);
+        imageView.setFitWidth(rectanglesSize * size);
+        imageView.setFitHeight(rectanglesSize * size);
 
         Button but3 = new Button("Игра за белых");
         Button but4 = new Button("Игра за черных");
-        but3.relocate(3.5 * size, 3.5 * size);
-        but4.relocate(3.45 * size, 4 * size);
-        root.setPrefSize(8 * size, 8 * size);
+
+        Double but3X = 3.5;
+        Double but3Y = 3.5;
+        Double but4X = 3.45;
+        Double but4Y = 4.0;
+
+        but3.relocate(but3X * size, but3Y * size);
+        but4.relocate(but4X * size, but4Y * size);
+        root.setPrefSize(rectanglesSize * size, rectanglesSize * size);
 
         root.getChildren().clear();
         root.getChildren().addAll(imageView, but3, but4);
@@ -125,9 +147,9 @@ public class MainApp extends Application {
 
     //отрисовка поля
     private void makeField() {
-        root.setPrefSize(8 * size, 8 * size);
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
+        root.setPrefSize(rectanglesSize * size, rectanglesSize * size);
+        for (int i = 0; i < rectanglesSize; i++) {
+            for (int j = 0; j < rectanglesSize; j++) {
                 Rectangle rectangle = createCell(i, j);
                 cells.getChildren().add(rectangle);
             }
@@ -139,8 +161,8 @@ public class MainApp extends Application {
     //заполнение доски шашками
     private void fillBoard() throws FileNotFoundException {
         checkers.getChildren().clear();
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < rectanglesSize; i++) {
+            for (int j = 0; j < rectanglesSize; j++) {
                 Checker checker;
                 if (gameState.board[i][j].hasChecker()) {
                     checker = gameState.board[i][j].getChecker();
@@ -151,9 +173,10 @@ public class MainApp extends Application {
         }
     }
 
+    //запуск приложения
     @Override
     public void start(Stage stage) throws Exception {
-        Scene scene = new Scene(makeScreen(), 8 * size, 8 * size);
+        Scene scene = new Scene(makeScreen(), rectanglesSize * size, rectanglesSize * size);
         stage.setScene(scene);
         stage.setTitle("Checkers");
         stage.show();
@@ -163,6 +186,7 @@ public class MainApp extends Application {
         Application.launch(args);
     }
 
+    //отрисовка клетки
     private Rectangle createCell(int i, int j) {
         Rectangle rectangle = new Rectangle();
         rectangle.setHeight(size);
@@ -173,14 +197,16 @@ public class MainApp extends Application {
         return rectangle;
     }
 
+    //создание модели шашки, с которой можно взаимодействовать
     private CheckerModel createChecker(int i, int j, Checker checker, boolean isDamka) throws FileNotFoundException {
         CheckerModel checkerModel = new CheckerModel(i, j, checker, isDamka);
         checkerModel.setOnMouseReleased(e -> {
             int newX = (int) Math.floor(e.getSceneX() / size);
             int newY = (int) Math.floor(e.getSceneY() / size);
 
+            //если мы ходим не своей шашкой
             if (!friendGame) {
-                if (checker.color == iiColor) {
+                if (checker.color == gameState.previousMoveColor) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Warning");
                     alert.setHeaderText(null);
@@ -189,6 +215,7 @@ public class MainApp extends Application {
                 }
             }
 
+            //если бить надо, а мы не бьем
             if (gameState.previousMoveColor == model.Color.BLACK && gameState.needtobyteforWhite() &&
                     checker.color == model.Color.WHITE && gameState.canMove(newX, newY, checker) != 2) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -198,6 +225,7 @@ public class MainApp extends Application {
                 alert.showAndWait();
             }
 
+            //если бить надо, а мы не бьем
             if (gameState.previousMoveColor == model.Color.WHITE && gameState.needtobyteforBlack() &&
                     checker.color == model.Color.BLACK && gameState.canMove(newX, newY, checker) != 2) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -213,13 +241,17 @@ public class MainApp extends Application {
                     && checker.color == model.Color.BLACK) && moveType != 2) {
                 moveType = 0;
             }
+            //делаем ход
             if (moveType != 0) gameState.makeMove(newX, newY, checker);
 
-            if (gameState.gameover().equals("White won") || gameState.gameover().equals("Black won")) {
+
+            //проверка на окончанеи партии
+            String str = gameState.gameover();
+            if (str.equals("White won") || str.equals("Black won")) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("We have winner");
                 alert.setHeaderText(null);
-                alert.setContentText("Game is over. Let's start again");
+                alert.setContentText("Game is over." + str);
                 alert.showAndWait();
                 try {
                     root.getChildren().clear();
@@ -229,15 +261,18 @@ public class MainApp extends Application {
                 }
             }
 
+            //если играем с ИИ, его ход
             if (!friendGame && moveType != 0 && gameState.previousMoveColor != iiColor) {
                 gameState.makeIImove(iiColor);
                 System.out.println(gameState.gameover());
 
-                if (gameState.gameover().equals("White won") || gameState.gameover().equals("Black won")) {
+                //проверка на конец партии после хода ИИ
+                String str1 = gameState.gameover();
+                if (str1.equals("White won") || str1.equals("Black won")) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("We have winner");
                     alert.setHeaderText(null);
-                    alert.setContentText("Game is over. Let's start again");
+                    alert.setContentText("Game is over." + str1);
                     alert.showAndWait();
                     try {
                         root.getChildren().clear();
@@ -248,7 +283,7 @@ public class MainApp extends Application {
                 }
             }
 
-
+            //отображение именений
             checkers.getChildren().clear();
             try {
                 fillBoard();

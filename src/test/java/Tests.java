@@ -4,6 +4,7 @@ import model.Color;
 import model.GameState;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Tests {
@@ -15,17 +16,6 @@ public class Tests {
 
         gameState.getBoard();
 
-        gameState.board[5][2].setChecker(new Checker(5,2,Color.BLACK, 0, false));
-        gameState.board[4][3].setChecker(new Checker(4,3,Color.WHITE, 0, false));
-        gameState.makeIImove(Color.WHITE);
-        System.out.println(gameState.gameover());
-        /*gameState.makeMove(6, 1, gameState.board[4][3].getChecker());
-        System.out.println(gameState.gameover());
-        gameState.undoMove(4, 3, 6, 1, Color.WHITE);
-        assertTrue(gameState.board[5][2].hasChecker() && gameState.board[4][3].hasChecker());*/
-        /*gameState.getBoard();
-
-        //System.out.println(gameState.getEvaluation());
         //тестирование правильного заполнения доски в начале игры
         assertTrue(
                 //белые шашки
@@ -49,11 +39,6 @@ public class Tests {
         assertTrue(!gameState.board[1][5].hasChecker() && gameState.board[0][5].hasChecker());
 
         //тестирование хода белой шашки
-        gameState.makeMove(1, 4, gameState.board[0][5].getChecker());
-        assertTrue(gameState.board[1][4].hasChecker());
-
-        gameState.undoMove(0, 5, 1, 4,Color.WHITE);
-
         gameState.makeMove(1, 4, gameState.board[0][5].getChecker());
         assertTrue(gameState.board[1][4].hasChecker());
 
@@ -145,7 +130,7 @@ public class Tests {
 
 
         //тестирование обнуляемости числа ходов после сброса доски
-        assertTrue(gameState.moveCount == 0);*/
+        assertTrue(gameState.moveCount == 0);
 
     }
 }
