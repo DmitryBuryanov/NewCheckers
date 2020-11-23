@@ -59,6 +59,8 @@ public class GameState {
                 }
             } else {
                 //обработка хода дамки, подсчет сколько шашек она встретила на пути
+                if (Math.abs(newX - nowX) == 0 || Math.abs(newY - nowY) == 0) return 0;
+
                 int lx = (newX - nowX) / Math.abs(newX - nowX);
                 int ly = (newY - nowY) / Math.abs(newY - nowY);
                 int xx = nowX + lx;
@@ -239,6 +241,7 @@ public class GameState {
                             if (board[nowX][nowY].getChecker().color != cell.getChecker().color &&
                                     cellExist(nowX - 1, nowY - 1) && !board[nowX - 1][nowY - 1].hasChecker())
                                 return true;
+                            else break;
                         }
                     }
                 }
@@ -254,6 +257,7 @@ public class GameState {
                             if (board[nowX][nowY].getChecker().color != cell.getChecker().color &&
                                     cellExist(nowX + 1, nowY - 1) && !board[nowX + 1][nowY - 1].hasChecker())
                                 return true;
+                            else break;
                         }
                     }
                 }
@@ -269,6 +273,7 @@ public class GameState {
                             if (board[nowX][nowY].getChecker().color != cell.getChecker().color &&
                                     cellExist(nowX + 1, nowY + 1) && !board[nowX + 1][nowY + 1].hasChecker())
                                 return true;
+                            else break;
                         }
                     }
                 }
@@ -284,6 +289,7 @@ public class GameState {
                             if (board[nowX][nowY].getChecker().color != cell.getChecker().color &&
                                     cellExist(nowX - 1, nowY + 1) && !board[nowX - 1][nowY + 1].hasChecker())
                                 return true;
+                            else break;
                         }
                     }
                 }
@@ -330,41 +336,39 @@ public class GameState {
         System.out.println(minimax[1]);
         System.out.println(minimax[2]);
         System.out.println(minimax[3]);
+        System.out.println(previousMoveColor);
         makeMove(minimax[2], minimax[3], board[minimax[0]][minimax[1]].getChecker());
     }
 
-    //процедура отмены хода, где как раз и используются списки, которые мы создавали при совершении хода
-    public void undoMove() {
-        ArrayList<Integer> lastMove = moves.get(moves.size() - 1);
-        int oldX = lastMove.get(0);
-        int oldY = lastMove.get(1);
-        int nowX = lastMove.get(2);
-        int nowY = lastMove.get(3);
-        boolean oldDamka = false;
-        if (lastMove.get(6) == 1) oldDamka = true;
-
-        Color oldColor = Color.WHITE;
-        if (lastMove.get(8) == 0) oldColor = Color.BLACK;
-
-        board[nowX][nowY].setChecker(null);
-        board[oldX][oldY].setChecker(new Checker(oldX, oldY, oldColor, 0, oldDamka));
-
-        if (lastMove.get(4) != -1 && lastMove.get(5) != -1) {
-            int evilX = lastMove.get(4);
-            int evilY = lastMove.get(5);
-            boolean evilDamka = false;
-            if (lastMove.get(7) == 1) evilDamka = true;
-            Color evilColor = Color.BLACK;
-            if (oldColor == Color.BLACK) evilColor = Color.WHITE;
-
-            board[evilX][evilY].setChecker(new Checker(evilX, evilY, evilColor, 0, evilDamka));
+    //функция, где текущее состояние доски копируется и сохраняется
+    public Cell[][] copyBoard() {
+        Cell[][] oldboard = new Cell[8][8];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Color color;
+                if ((i + j) % 2 == 0) color = Color.BEIGE;
+                else color = Color.BROWN;
+                oldboard[i][j] = new Cell(i, j, color);
+                oldboard[i][j].setChecker(null);
+                Checker checker = board[i][j].getChecker();
+                if (board[i][j].hasChecker()) oldboard[i][j].setChecker(new Checker(i, j, checker.color,
+                        checker.moveType, checker.isDamka));
+            }
         }
+        return oldboard;
+    }
 
-        moves.remove(moves.size() - 1);
-        moveCount--;
-
-        if (oldColor == Color.BLACK) previousMoveColor = Color.WHITE;
-        else previousMoveColor = Color.BLACK;
+    //процедура отмены хода, используется замена текущего состояния доски на предыдущее
+    public void makeOldBoard(Cell[][] oldBoard, Color color) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j].setChecker(null);
+                Checker checker = oldBoard[i][j].getChecker();
+                if (oldBoard[i][j].hasChecker()) board[i][j].setChecker(new Checker(i, j, checker.color,
+                        checker.moveType, checker.isDamka));
+            }
+        }
+        previousMoveColor = color;
     }
 
     //оценочная функция
@@ -381,12 +385,14 @@ public class GameState {
                 if (board[i][j].hasChecker()) {
                     Checker checker = board[i][j].getChecker();
                     if (board[i][j].getChecker().color == Color.BLACK) {
-                        if (checker.isDamka) blackCount += 3;
-                        else blackCount++;
+                        //if (checker.isDamka) blackCount += 3;
+                        //else
+                        blackCount++;
                     }
                     if (board[i][j].getChecker().color == Color.WHITE) {
-                        if (checker.isDamka) whiteCount += 3;
-                        else whiteCount++;
+                        //if (checker.isDamka) whiteCount += 3;
+                        //else
+                        whiteCount++;
                     }
                 }
             }
@@ -442,6 +448,7 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             //здесь если задаваемая глубина просчета достигла максимума оцениваем
                                             // состояние поля, если нет - считаем дальше
@@ -465,7 +472,7 @@ public class GameState {
                                                 }
                                             }
                                             //отменяем совершенный ранее ход для возможности просчета остальных
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.WHITE);
                                         }
                                     }
                                 }
@@ -478,6 +485,7 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.WHITE);
@@ -498,7 +506,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.WHITE);
                                         }
                                     }
                                 }
@@ -511,6 +519,7 @@ public class GameState {
                                     if (cellExist(nowX, nowY)) {
                                         if (cellExist(nowX, nowY)) {
                                             if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                                Cell[][] oldBoard = copyBoard();
                                                 makeMove(nowX, nowY, board[i][j].getChecker());
                                                 if (depth != maxDepth) {
                                                     Integer[] score = minimax(depth + 1, Color.WHITE);
@@ -531,7 +540,7 @@ public class GameState {
                                                         currentDepth[4] = score;
                                                     }
                                                 }
-                                                undoMove();
+                                                makeOldBoard(oldBoard, Color.WHITE);
                                             }
                                         }
                                     }
@@ -545,6 +554,7 @@ public class GameState {
                                     if (cellExist(nowX, nowY)) {
                                         if (cellExist(nowX, nowY)) {
                                             if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                                Cell[][] oldBoard = copyBoard();
                                                 makeMove(nowX, nowY, board[i][j].getChecker());
                                                 if (depth != maxDepth) {
                                                     Integer[] score = minimax(depth + 1, Color.WHITE);
@@ -565,7 +575,7 @@ public class GameState {
                                                         currentDepth[4] = score;
                                                     }
                                                 }
-                                                undoMove();
+                                                makeOldBoard(oldBoard, Color.WHITE);
                                             }
                                         }
                                     }
@@ -574,10 +584,11 @@ public class GameState {
                                 //если не дамка, она может сделать ходы со взятием только на 2 клетки в любом
                                 // направлении, так же проверим каждое из них
                                 if (canMove(i - 2, j - 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i - 2, j - 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -594,13 +605,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
                                 if (canMove(i + 2, j + 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i + 2, j + 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -609,7 +621,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score <= currentDepth[4]) {
+                                        if (score < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -617,13 +629,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
                                 if (canMove(i - 2, j + 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i - 2, j + 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -632,7 +645,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score <= currentDepth[4]) {
+                                        if (score < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -640,13 +653,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
                                 if (canMove(i + 2, j - 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i + 2, j - 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -655,7 +669,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score <= currentDepth[4]) {
+                                        if (score < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -663,7 +677,7 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
                             }
                         }
@@ -679,10 +693,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.WHITE);
-                                                if (score[4] <= currentDepth[4]) {
+                                                if (score[4] < currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -691,7 +706,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score <= currentDepth[4]) {
+                                                if (score < currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -699,7 +714,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.WHITE);
                                         }
                                     }
                                 }
@@ -711,10 +726,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.WHITE);
-                                                if (score[4] <= currentDepth[4]) {
+                                                if (score[4] < currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -723,7 +739,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score <= currentDepth[4]) {
+                                                if (score < currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -731,7 +747,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.WHITE);
                                         }
                                     }
                                 }
@@ -744,10 +760,11 @@ public class GameState {
                                     if (cellExist(nowX, nowY)) {
                                         if (cellExist(nowX, nowY)) {
                                             if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                                Cell[][] oldBoard = copyBoard();
                                                 makeMove(nowX, nowY, board[i][j].getChecker());
                                                 if (depth != maxDepth) {
                                                     Integer[] score = minimax(depth + 1, Color.WHITE);
-                                                    if (score[4] <= currentDepth[4]) {
+                                                    if (score[4] < currentDepth[4]) {
                                                         currentDepth[0] = i;
                                                         currentDepth[1] = j;
                                                         currentDepth[2] = nowX;
@@ -756,7 +773,7 @@ public class GameState {
                                                     }
                                                 } else {
                                                     int score = getEvaluation();
-                                                    if (score <= currentDepth[4]) {
+                                                    if (score < currentDepth[4]) {
                                                         currentDepth[0] = i;
                                                         currentDepth[1] = j;
                                                         currentDepth[2] = nowX;
@@ -764,7 +781,7 @@ public class GameState {
                                                         currentDepth[4] = score;
                                                     }
                                                 }
-                                                undoMove();
+                                                makeOldBoard(oldBoard, Color.WHITE);
                                             }
                                         }
                                     }
@@ -778,10 +795,11 @@ public class GameState {
                                     if (cellExist(nowX, nowY)) {
                                         if (cellExist(nowX, nowY)) {
                                             if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                                Cell[][] oldBoard = copyBoard();
                                                 makeMove(nowX, nowY, board[i][j].getChecker());
                                                 if (depth != maxDepth) {
                                                     Integer[] score = minimax(depth + 1, Color.WHITE);
-                                                    if (score[4] <= currentDepth[4]) {
+                                                    if (score[4] < currentDepth[4]) {
                                                         currentDepth[0] = i;
                                                         currentDepth[1] = j;
                                                         currentDepth[2] = nowX;
@@ -790,7 +808,7 @@ public class GameState {
                                                     }
                                                 } else {
                                                     int score = getEvaluation();
-                                                    if (score <= currentDepth[4]) {
+                                                    if (score < currentDepth[4]) {
                                                         currentDepth[0] = i;
                                                         currentDepth[1] = j;
                                                         currentDepth[2] = nowX;
@@ -798,7 +816,7 @@ public class GameState {
                                                         currentDepth[4] = score;
                                                     }
                                                 }
-                                                undoMove();
+                                                makeOldBoard(oldBoard, Color.WHITE);
                                             }
                                         }
                                     }
@@ -807,10 +825,11 @@ public class GameState {
                                 //шашка - не дамка, проверяем лишь два направления хода на клетку
                                 // вперед-влево или вперед-вправо
                                 if (canMove(i + 1, j + 1, board[i][j].getChecker()) == 1) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i + 1, j + 1, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 1;
@@ -819,7 +838,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score <= currentDepth[4]) {
+                                        if (score < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 1;
@@ -827,30 +846,31 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
-                                if (canMove(i + 1, j - 1, board[i][j].getChecker()) == 1) {
-                                    makeMove(i + 1, j - 1, board[i][j].getChecker());
+                                if (canMove(i - 1, j + 1, board[i][j].getChecker()) == 1) {
+                                    Cell[][] oldBoard = copyBoard();
+                                    makeMove(i - 1, j + 1, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.WHITE);
-                                        if (score[4] <= currentDepth[4]) {
+                                        if (score[4] < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
-                                            currentDepth[2] = i + 1;
-                                            currentDepth[3] = j - 1;
+                                            currentDepth[2] = i - 1;
+                                            currentDepth[3] = j + 1;
                                             currentDepth[4] = score[4];
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score <= currentDepth[4]) {
+                                        if (score < currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
-                                            currentDepth[2] = i + 1;
-                                            currentDepth[3] = j - 1;
+                                            currentDepth[2] = i - 1;
+                                            currentDepth[3] = j + 1;
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.WHITE);
                                 }
                             }
                         }
@@ -869,10 +889,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -881,7 +902,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -889,7 +910,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -901,10 +922,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -913,7 +935,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -921,7 +943,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -933,10 +955,11 @@ public class GameState {
                                     nowY++;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -945,7 +968,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -953,7 +976,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -965,10 +988,11 @@ public class GameState {
                                     nowY++;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 2) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -977,7 +1001,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -985,16 +1009,17 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
                             } else {
                                 if (canMove(i - 2, j - 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i - 2, j - 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
+                                        if (score[4] > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -1003,7 +1028,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
+                                        if (score > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -1011,13 +1036,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.BLACK);
                                 }
                                 if (canMove(i + 2, j + 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i + 2, j + 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
+                                        if (score[4] > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -1026,7 +1052,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
+                                        if (score > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -1034,13 +1060,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.BLACK);
                                 }
                                 if (canMove(i - 2, j + 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i - 2, j + 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
+                                        if (score[4] > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -1049,7 +1076,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
+                                        if (score > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 2;
@@ -1057,13 +1084,14 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.BLACK);
                                 }
                                 if (canMove(i + 2, j - 2, board[i][j].getChecker()) == 2) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i + 2, j - 2, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
+                                        if (score[4] > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -1072,7 +1100,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
+                                        if (score > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i + 2;
@@ -1080,7 +1108,7 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.BLACK);
                                 }
                             }
                         }
@@ -1094,10 +1122,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1106,7 +1135,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1114,7 +1143,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -1126,10 +1155,11 @@ public class GameState {
                                     nowY--;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1138,7 +1168,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1146,7 +1176,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -1158,10 +1188,11 @@ public class GameState {
                                     nowY++;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1170,7 +1201,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1178,7 +1209,7 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
@@ -1190,10 +1221,11 @@ public class GameState {
                                     nowY++;
                                     if (cellExist(nowX, nowY)) {
                                         if (canMove(nowX, nowY, board[i][j].getChecker()) == 1) {
+                                            Cell[][] oldBoard = copyBoard();
                                             makeMove(nowX, nowY, board[i][j].getChecker());
                                             if (depth != maxDepth) {
                                                 Integer[] score = minimax(depth + 1, Color.BLACK);
-                                                if (score[4] >= currentDepth[4]) {
+                                                if (score[4] > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1202,7 +1234,7 @@ public class GameState {
                                                 }
                                             } else {
                                                 int score = getEvaluation();
-                                                if (score >= currentDepth[4]) {
+                                                if (score > currentDepth[4]) {
                                                     currentDepth[0] = i;
                                                     currentDepth[1] = j;
                                                     currentDepth[2] = nowX;
@@ -1210,39 +1242,17 @@ public class GameState {
                                                     currentDepth[4] = score;
                                                 }
                                             }
-                                            undoMove();
+                                            makeOldBoard(oldBoard, Color.BLACK);
                                         }
                                     }
                                 }
                             } else {
-                                if (canMove(i - 1, j + 1, board[i][j].getChecker()) == 1) {
-                                    makeMove(i - 1, j + 1, board[i][j].getChecker());
-                                    if (depth != maxDepth) {
-                                        Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
-                                            currentDepth[0] = i;
-                                            currentDepth[1] = j;
-                                            currentDepth[2] = i - 1;
-                                            currentDepth[3] = j + 1;
-                                            currentDepth[4] = score[4];
-                                        }
-                                    } else {
-                                        int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
-                                            currentDepth[0] = i;
-                                            currentDepth[1] = j;
-                                            currentDepth[2] = i - 1;
-                                            currentDepth[3] = j + 1;
-                                            currentDepth[4] = score;
-                                        }
-                                    }
-                                    undoMove();
-                                }
                                 if (canMove(i - 1, j - 1, board[i][j].getChecker()) == 1) {
+                                    Cell[][] oldBoard = copyBoard();
                                     makeMove(i - 1, j - 1, board[i][j].getChecker());
                                     if (depth != maxDepth) {
                                         Integer[] score = minimax(depth + 1, Color.BLACK);
-                                        if (score[4] >= currentDepth[4]) {
+                                        if (score[4] > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 1;
@@ -1251,7 +1261,7 @@ public class GameState {
                                         }
                                     } else {
                                         int score = getEvaluation();
-                                        if (score >= currentDepth[4]) {
+                                        if (score > currentDepth[4]) {
                                             currentDepth[0] = i;
                                             currentDepth[1] = j;
                                             currentDepth[2] = i - 1;
@@ -1259,7 +1269,31 @@ public class GameState {
                                             currentDepth[4] = score;
                                         }
                                     }
-                                    undoMove();
+                                    makeOldBoard(oldBoard, Color.BLACK);
+                                }
+                                if (canMove(i + 1, j - 1, board[i][j].getChecker()) == 1) {
+                                    Cell[][] oldBoard = copyBoard();
+                                    makeMove(i + 1, j - 1, board[i][j].getChecker());
+                                    if (depth != maxDepth) {
+                                        Integer[] score = minimax(depth + 1, Color.BLACK);
+                                        if (score[4] > currentDepth[4]) {
+                                            currentDepth[0] = i;
+                                            currentDepth[1] = j;
+                                            currentDepth[2] = i + 1;
+                                            currentDepth[3] = j - 1;
+                                            currentDepth[4] = score[4];
+                                        }
+                                    } else {
+                                        int score = getEvaluation();
+                                        if (score > currentDepth[4]) {
+                                            currentDepth[0] = i;
+                                            currentDepth[1] = j;
+                                            currentDepth[2] = i + 1;
+                                            currentDepth[3] = j - 1;
+                                            currentDepth[4] = score;
+                                        }
+                                    }
+                                    makeOldBoard(oldBoard, Color.BLACK);
                                 }
                             }
                         }
